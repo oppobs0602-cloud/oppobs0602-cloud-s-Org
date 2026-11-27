@@ -51,6 +51,10 @@ app.all(["/api/db", "/api/auth"], express.raw({ type: "*/*", limit: "1mb" }), as
   }
 });
 
+app.get("/firebase-applet-config.json", (_req, res) => {
+  res.sendFile(path.join(__dirname, "firebase-applet-config.json"));
+});
+
 app.get(["/", "/index.html"], (_req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });

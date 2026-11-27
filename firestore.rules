@@ -1,0 +1,215 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Pillar 3: Primitive Helpers
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function hasParentUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // Validation Blueprints (Pillar 2)
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.uid == userId
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 20
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSaveSlot(data, userId) {
+      return data.keys().hasAll(['ownerId', 'name', 'wave', 'lv', 'gold', 't', 'state', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'name', 'wave', 'lv', 'gold', 't', 'state', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 20
+        && data.wave is int && data.wave >= 0 && data.wave <= 9999
+        && data.lv is int && data.lv >= 1 && data.lv <= 999
+        && data.gold is int && data.gold >= 0 && data.gold <= 999999999
+        && data.t is int && data.t >= 0
+        && data.state is map && data.state.keys().size() <= 40
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRankState(data, userId) {
+      return data.keys().hasAll(['ownerId', 'rp', 'w', 'l', 'state', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'rp', 'w', 'l', 'state', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.rp is int && data.rp >= 0 && data.rp <= 99999
+        && data.w is int && data.w >= 0 && data.w <= 999999
+        && data.l is int && data.l >= 0 && data.l <= 999999
+        && data.state is map && data.state.keys().size() <= 20
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidLeaderboardEntry(data, userId) {
+      return data.keys().hasAll(['ownerId', 'name', 'wave', 'lv', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'name', 'wave', 'lv', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 20
+        && data.wave is int && data.wave >= 0 && data.wave <= 9999
+        && data.lv is int && data.lv >= 1 && data.lv <= 999
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRankDefenseEntry(data, userId) {
+      return data.keys().hasAll(['ownerId', 'name', 'rp', 'def', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'name', 'rp', 'def', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 20
+        && data.rp is int && data.rp >= 0 && data.rp <= 99999
+        && data.def is list && data.def.size() <= 5
+        && (data.def.size() == 0 || data.def[0] is map)
+        && data.updatedAt is timestamp;
+    }
+
+    // User Profiles (PII-free, owner-only)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
+
+      // Permanent Save Slots (Master Gate -> Parent /users/{userId})
+      match /saves/{saveId} {
+        allow get: if isValidId(userId) && isValidId(saveId)
+          && isOwner(userId) && hasParentUser(userId)
+          && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId)
+          && isOwner(userId)
+          && hasParentUser(userId);
+        allow create: if isValidId(userId) && isValidId(saveId)
+          && isOwner(userId)
+          && isValidSaveSlot(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentUser(userId);
+        allow update: if isValidId(userId) && isValidId(saveId)
+          && isOwner(userId)
+          && isValidSaveSlot(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'wave', 'lv', 'gold', 't', 'state', 'updatedAt'])
+          && hasParentUser(userId);
+        allow delete: if isValidId(userId) && isValidId(saveId)
+          && isOwner(userId)
+          && existing().ownerId == request.auth.uid
+          && hasParentUser(userId);
+      }
+
+      // Private Ranked Mode State (Master Gate -> Parent /users/{userId})
+      match /rankState/{docId} {
+        allow get: if isValidId(userId) && docId == 'main'
+          && isOwner(userId) && hasParentUser(userId)
+          && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && docId == 'main'
+          && isOwner(userId)
+          && isValidRankState(incoming(), userId)
+          && incoming().updatedAt == request.time
+          && hasParentUser(userId);
+        allow update: if isValidId(userId) && docId == 'main'
+          && isOwner(userId)
+          && isValidRankState(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['rp', 'w', 'l', 'state', 'updatedAt'])
+          && hasParentUser(userId);
+      }
+    }
+
+    // Public Endless Leaderboard (zero PII)
+    match /lb/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'wave', 'lv', 'updatedAt']);
+    }
+
+    // Public Ranked Defense Teams (zero PII)
+    match /rank/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidRankDefenseEntry(incoming(), userId)
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidRankDefenseEntry(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'rp', 'def', 'updatedAt']);
+    }
+
+    // Admin / Cheat Allowlist (read-only by owner, no client writes)
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list, create, update, delete: if false;
+    }
+  }
+}

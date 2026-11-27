@@ -1,0 +1,228 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Player account profile stored permanently per Firebase Auth UID without PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the account owner."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "In-game display nickname chosen by the player."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was last updated."
+        }
+      },
+      "required": ["uid", "displayName", "createdAt", "updatedAt"]
+    },
+    "SaveSlot": {
+      "title": "SaveSlot",
+      "description": "Permanent Endless mode save slot stored as native Firestore Maps and Lists.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Save slot nickname."
+        },
+        "wave": {
+          "type": "integer",
+          "description": "Current wave reached in this save."
+        },
+        "lv": {
+          "type": "integer",
+          "description": "Current team level in this save."
+        },
+        "gold": {
+          "type": "integer",
+          "description": "Current gold in this save."
+        },
+        "t": {
+          "type": "integer",
+          "description": "Client save timestamp in epoch milliseconds."
+        },
+        "state": {
+          "type": "object",
+          "description": "Native Firestore Map holding full party, bench, inventory, pets, weapons, and mastery state."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the save slot was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the save slot was last updated."
+        }
+      },
+      "required": ["ownerId", "name", "wave", "lv", "gold", "t", "state", "createdAt", "updatedAt"]
+    },
+    "RankState": {
+      "title": "RankState",
+      "description": "Player's private Ranked mode state (rating, record, imported roster, attack/defense configurations).",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "rp": {
+          "type": "integer",
+          "description": "Ranked points."
+        },
+        "w": {
+          "type": "integer",
+          "description": "Ranked wins count."
+        },
+        "l": {
+          "type": "integer",
+          "description": "Ranked losses count."
+        },
+        "state": {
+          "type": "object",
+          "description": "Native Firestore Map storing roster, def, att, pd, and pa."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update."
+        }
+      },
+      "required": ["ownerId", "rp", "w", "l", "state", "updatedAt"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public Endless mode high-score entry without PII.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Public player display name."
+        },
+        "wave": {
+          "type": "integer",
+          "description": "Highest wave cleared."
+        },
+        "lv": {
+          "type": "integer",
+          "description": "Team level at peak wave."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of record update."
+        }
+      },
+      "required": ["ownerId", "name", "wave", "lv", "updatedAt"]
+    },
+    "RankDefenseEntry": {
+      "title": "RankDefenseEntry",
+      "description": "Public Ranked PvP defense team entry without PII.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Public player display name."
+        },
+        "rp": {
+          "type": "integer",
+          "description": "Ranked points."
+        },
+        "def": {
+          "type": "array",
+          "description": "Bounded defense team array (up to 4 fighters + 1 pet)."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of defense update."
+        }
+      },
+      "required": ["ownerId", "name", "rp", "def", "updatedAt"]
+    },
+    "AdminFlag": {
+      "title": "AdminFlag",
+      "description": "Read-only admin/cheat authorization flag.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether special codes are enabled for this UID."
+        }
+      },
+      "required": ["enabled"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Permanent user profile keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/saves/{saveId}": {
+      "schema": { "$ref": "#/entities/SaveSlot" },
+      "description": "Permanent Endless mode save slots belonging to the user."
+    },
+    "/users/{userId}/rankState/{docId}": {
+      "schema": { "$ref": "#/entities/RankState" },
+      "description": "Private Ranked mode state belonging to the user."
+    },
+    "/lb/{userId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Public Endless mode leaderboard entries."
+    },
+    "/rank/{userId}": {
+      "schema": { "$ref": "#/entities/RankDefenseEntry" },
+      "description": "Public Ranked PvP defense teams and ratings."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminFlag" },
+      "description": "Server-managed read-only privilege flags."
+    }
+  }
+}
