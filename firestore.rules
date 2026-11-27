@@ -58,7 +58,7 @@ service cloud.firestore {
         && data.wave is int && data.wave >= 0 && data.wave <= 9999
         && data.lv is int && data.lv >= 1 && data.lv <= 999
         && data.gold is int && data.gold >= 0 && data.gold <= 999999999
-        && data.t is int && data.t >= 0
+        && data.t is int && data.t >= 0 && data.t <= 9999999999999
         && data.state is map && data.state.keys().size() <= 40
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
@@ -125,8 +125,9 @@ service cloud.firestore {
       // Permanent Save Slots (Master Gate -> Parent /users/{userId})
       match /saves/{saveId} {
         allow get: if isValidId(userId) && isValidId(saveId)
-          && isOwner(userId) && hasParentUser(userId)
-          && existing().ownerId == request.auth.uid;
+          && isOwner(userId)
+          && (resource == null || existing().ownerId == request.auth.uid)
+          && hasParentUser(userId);
         allow list: if isOwner(userId)
           && existing().ownerId == request.auth.uid;
         allow create: if isValidId(userId) && isValidId(saveId)
@@ -152,8 +153,9 @@ service cloud.firestore {
       // Private Ranked Mode State (Master Gate -> Parent /users/{userId})
       match /rankState/{docId} {
         allow get: if isValidId(userId) && docId == 'main'
-          && isOwner(userId) && hasParentUser(userId)
-          && existing().ownerId == request.auth.uid;
+          && isOwner(userId)
+          && (resource == null || existing().ownerId == request.auth.uid)
+          && hasParentUser(userId);
         allow create: if isValidId(userId) && docId == 'main'
           && isOwner(userId)
           && isValidRankState(incoming(), userId)
@@ -172,33 +174,37 @@ service cloud.firestore {
     // Public Endless Leaderboard (zero PII)
     match /lb/{userId} {
       allow get: if isValidId(userId);
-      allow list: if true;
+      allow list: if request.query.limit != null && request.query.limit <= 100;
       allow create: if isValidId(userId)
         && isOwner(userId)
         && isValidLeaderboardEntry(incoming(), userId)
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && hasParentUser(userId);
       allow update: if isValidId(userId)
         && isOwner(userId)
         && isValidLeaderboardEntry(incoming(), userId)
         && incoming().ownerId == existing().ownerId
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'wave', 'lv', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'wave', 'lv', 'updatedAt'])
+        && hasParentUser(userId);
     }
 
     // Public Ranked Defense Teams (zero PII)
     match /rank/{userId} {
       allow get: if isValidId(userId);
-      allow list: if true;
+      allow list: if request.query.limit != null && request.query.limit <= 100;
       allow create: if isValidId(userId)
         && isOwner(userId)
         && isValidRankDefenseEntry(incoming(), userId)
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && hasParentUser(userId);
       allow update: if isValidId(userId)
         && isOwner(userId)
         && isValidRankDefenseEntry(incoming(), userId)
         && incoming().ownerId == existing().ownerId
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'rp', 'def', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'rp', 'def', 'updatedAt'])
+        && hasParentUser(userId);
     }
 
     // Admin / Cheat Allowlist (read-only by owner, no client writes)
