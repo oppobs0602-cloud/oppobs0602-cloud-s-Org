@@ -51,12 +51,34 @@ app.all(["/api/db", "/api/auth"], express.raw({ type: "*/*", limit: "1mb" }), as
   }
 });
 
+import fs from "node:fs";
+
+const fbConfigPath = path.join(__dirname, "firebase-applet-config.json");
+const readFbConfigJson = () => {
+  try {
+    return JSON.parse(fs.readFileSync(fbConfigPath, "utf8"));
+  } catch {
+    return null;
+  }
+};
+
 app.get("/firebase-applet-config.json", (_req, res) => {
-  res.sendFile(path.join(__dirname, "firebase-applet-config.json"));
+  res.sendFile(fbConfigPath);
 });
 
 app.get(["/", "/index.html"], (_req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  try {
+    let html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
+    const cfg = readFbConfigJson();
+    if (cfg) {
+      const safeJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
+      html = html.replace("<!--__FB_CFG__-->", `<script>window.__FB_CONFIG=${safeJson};</script>`);
+    }
+    res.type("html").send(html);
+  } catch (err) {
+    console.error("Failed to serve index.html:", err);
+    res.sendFile(path.join(__dirname, "index.html"));
+  }
 });
 
 app.get("/favicon.ico", (_req, res) => {

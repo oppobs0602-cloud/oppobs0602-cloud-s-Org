@@ -27,13 +27,13 @@ export const DIRTY_DOZEN_CASES: DirtyDozenCase[] = [
   },
   {
     id: 2,
-    name: 'Unverified Email Write',
+    name: 'Unauthenticated Write',
     targetPath: '/users/userA',
-    actorUid: 'userA',
+    actorUid: null,
     emailVerified: false,
     operation: 'create',
     expected: 'DENY',
-    ruleGuard: 'isVerified() requires request.auth.token.email_verified == true',
+    ruleGuard: 'isSignedIn() requires request.auth != null',
   },
   {
     id: 3,

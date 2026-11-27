@@ -58,7 +58,8 @@ button b{display:block;font-weight:600;font-size:16px}button span{color:var(--mu
 .r3 button{text-align:center;font-weight:600}.r3 button b{font-size:15px}.r3 button span{font-size:11px;display:block;font-weight:400}
 button.go{background:var(--gold);color:#241a05;border-color:var(--gold);text-align:center;font-weight:600}
 .cost{float:right;color:var(--gold);font-style:normal;font-weight:600}
-.cd{flex-direction:row;align-items:center}.cd input{flex:1;min-width:0;font:inherit;color:var(--tx);background:#10151f;border:2px solid var(--line);border-radius:10px;padding:10px;user-select:text;-webkit-user-select:text}</style></head><body><div id="wrap">
+.ov input{font:inherit;color:var(--tx);background:#10151f;border:2px solid var(--line);border-radius:10px;padding:10px;user-select:text;-webkit-user-select:text;width:100%;box-sizing:border-box}
+.cd{flex-direction:row;align-items:center}.cd input{flex:1;min-width:0;width:auto;font:inherit;color:var(--tx);background:#10151f;border:2px solid var(--line);border-radius:10px;padding:10px;user-select:text;-webkit-user-select:text}</style></head><body><div id="wrap">
 <canvas id="cv"></canvas><div id="lbs"></div>
 <div id="hud"><span id="h1"></span><span id="h2"></span></div><div id="msg"></div><div id="fx"></div><button id="rv">มุมมอง: ปกติ</button>
 <div id="pn"><div id="who"></div><div id="pmain" class="r3"><button id="ba"><b>⚔️ โจมตี</b><span>เลือก 4 สกิล</span></button><button id="bi"><b>🎒 กระเป๋า</b><span>ใช้ไอเท็มร้านค้า</span></button><button id="bdg"><b>💨 หลบหลีก</b><span>มินิเกมหลบ + ฟื้น MP</span></button><button id="bd"><b>🛡️ ป้องกัน</b><span>ลดดาเมจ 50%</span></button></div><div id="psub"><div class="r3"><button id="sk0"></button><button id="sk1"></button><button id="sk2"></button><button id="sk3"></button></div><button id="pback" class="sub-back">↩ กลับเมนูหลัก</button></div><div id="pinv"><div class="r3" id="pinvl"></div><button id="iback" class="sub-back">↩ กลับเมนูหลัก</button></div><p id="pnh">แตะชื่อศัตรูเพื่อเลือกเป้าหมาย • หลบหลีกสำเร็จเพื่อฟื้น MP (เวลายิ่งสั้นลงในเวฟนั้น และรีเซ็ตเมื่อจบเวฟ)</p></div>
@@ -84,13 +85,14 @@ button.go{background:var(--gold);color:#241a05;border-color:var(--gold);text-ali
 <div class="ov" id="wp"><h2>🗡️ ร้านและโรงตีอาวุธ</h2><p class="ok" id="wpi"></p><p>ซื้อซ้ำเพื่ออัปเลเวล (Lv.5) แล้วใช้วัตถุดิบ + ทอง ตีบวกอัปเกรดเพิ่มพลัง (สูงสุด +10) • อาวุธลีเจนดารี่อยู่ที่ 🌑 ร้านค้ามืด</p><div class="row" id="wps"></div><h2 style="font-size:17px">🔨 อัปเกรดอาวุธ (ตีบวก)</h2><div class="row" id="wpu"></div><h2 style="font-size:17px">สวมใส่อาวุธ</h2><div class="row" id="wpe"></div><div class="row"><button class="go" id="wpb">กลับร้านค้า</button></div></div>
 <div class="ov" id="ms"><h2>📖 ความชำนาญสกิล</h2><p class="ok" id="msi"></p><p>ใช้สกิลในฉากต่อสู้เพื่อเก็บ EXP หรือฝึกฝนที่ร้านค้า • พลังสกิล +8%/ระดับ • Lv.5 ลด MP -1 • Lv.10 ลด MP -2</p><div class="row" id="msl"></div><div class="row"><button class="go" id="msb">กลับร้านค้า</button></div></div>
 <div class="ov" id="over"><h2>ทีมพ่ายแพ้</h2><p id="ot"></p><div class="row"><button id="lb2"><b>🏆 ดูอันดับลีดเดอร์บอร์ด</b></button><button class="go" id="again">เล่นใหม่</button></div></div>
-<div class="ov" id="au" style="z-index:100;background:#0f1320"><h1>ปาร์ตี้นักสู้</h1><p>เข้าสู่ระบบด้วยบัญชี Google เพื่อบันทึกบัญชี ไฟล์เซฟ และความคืบหน้าไว้บนคลาวด์อย่างถาวร</p><p id="aus" style="font-size:13px;color:var(--mut)">บัญชีและเซฟจะไม่สูญหายแม้รีเฟรช แก้ไขไฟล์ หรือเปิดจากอุปกรณ์อื่น</p><p id="ae" style="color:#ff8a80;min-height:1.3em;margin:0"></p><div class="row"><button class="go" id="al">🔐 เข้าสู่ระบบด้วย Google</button><button id="ag">เล่นโดยไม่ล็อกอิน (เซฟเฉพาะเครื่อง)</button></div></div>
+<div class="ov" id="au" style="z-index:100;background:#0f1320"><h1>ปาร์ตี้นักสู้</h1><p>เข้าสู่ระบบเพื่อบันทึกบัญชี ไฟล์เซฟ และความคืบหน้าไว้บนคลาวด์อย่างถาวร</p><div class="row"><button class="go" id="al">🔐 เข้าสู่ระบบด้วย Google</button></div><p style="font-size:12px;color:var(--mut)">หรือเข้าสู่ระบบ / สมัครสมาชิกด้วยอีเมล</p><div class="row"><input id="ae_em" type="email" placeholder="อีเมล (เช่น name@gmail.com)" maxlength="120" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false"><input id="ae_pw" type="password" placeholder="รหัสผ่าน (6 ตัวอักษรขึ้นไป)" maxlength="100" autocomplete="current-password"></div><p id="ae" style="color:#ff8a80;min-height:1.3em;margin:0;font-size:13px"></p><div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="ael" style="text-align:center">📧 เข้าสู่ระบบ</button><button id="aer" style="text-align:center">📝 สมัครใหม่</button></div><div class="row"><button id="aef" style="text-align:center;font-size:13px;padding:8px">🔑 ลืมรหัสผ่าน (ส่งลิงก์รีเซ็ตทางอีเมล)</button><button id="ag">เล่นโดยไม่ล็อกอิน (เซฟเฉพาะเครื่อง)</button></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!--__FB_CFG__-->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, deleteDoc, collection, getDocs, query, orderBy, limit, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js';
 
 const OperationType = {
   CREATE: 'create',
@@ -127,24 +129,25 @@ function handleFirestoreError(error, operationType, path) {
   throw new Error(JSON.stringify(errInfo));
 }
 
-async function initFirebase() {
-  const res = await fetch('/firebase-applet-config.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to load Firebase configuration');
-  const firebaseConfig = await res.json();
+function setupFirebase(firebaseConfig) {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
+  getDocFromServer(doc(db, 'test', 'connection')).catch(error => {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error('Please check your Firebase configuration.');
     }
-  }
+  });
   return { auth, db };
 }
 
-const ready = initFirebase();
+const ready = window.__FB_CONFIG
+  ? Promise.resolve(setupFirebase(window.__FB_CONFIG))
+  : (async () => {
+      const res = await fetch('/firebase-applet-config.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load Firebase configuration');
+      return setupFirebase(await res.json());
+    })();
 
 window.__FB = {
   ready,
@@ -152,6 +155,9 @@ window.__FB = {
   get db() { return db; },
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   doc,
@@ -162,6 +168,7 @@ window.__FB = {
   collection,
   getDocs,
   query,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -723,7 +730,7 @@ async function ensureUserProfile(user){
       profileReadyUid=uid;
       return true;
     }else{
-      const dn=safeName(user.displayName||nick||'นักสู้');
+      const dn=safeName(user.displayName||(user.email?user.email.split('@')[0]:'')||nick||'นักสู้');
       nick=dn;$('nm').value=nick;
       await FB.setDoc(ref,{uid,displayName:dn,createdAt:FB.serverTimestamp(),updatedAt:FB.serverTimestamp()});
       try{if(ACCT){ACCT.name=nick;localStorage.setItem('turnacct',JSON.stringify(ACCT))}localStorage.setItem('turnnick',nick)}catch(e){}
@@ -738,6 +745,21 @@ async function ensureUserProfile(user){
 
 (()=>{myId=ACCT?ACCT.id:null;
 const A=x=>document.getElementById(x);
+const authErrMsg=e=>{
+  const c=e&&e.code;
+  if(c==='auth/popup-closed-by-user')return'ปิดหน้าต่างล็อกอินก่อนเสร็จสิ้น';
+  if(c==='auth/cancelled-popup-request')return'คำขอล็อกอินถูกยกเลิก กรุณากดลองใหม่อีกครั้ง';
+  if(c==='auth/popup-blocked')return'เบราว์เซอร์บล็อกหน้าต่างป๊อปอัป กรุณาอนุญาตป๊อปอัปหรือเปิดแอปในแท็บใหม่';
+  if(c==='auth/unauthorized-domain')return'โดเมน '+location.hostname+' ยังไม่ได้รับอนุญาตใน Firebase Authentication (Authorized domains)';
+  if(c==='auth/operation-not-allowed')return'วิธีล็อกอินด้วยอีเมล/รหัสผ่านยังไม่ได้เปิดใน Firebase Console (Authentication -> Sign-in method -> Email/Password) หรือใช้ปุ่ม Google ด้านบน';
+  if(c==='auth/invalid-email')return'รูปแบบอีเมลไม่ถูกต้อง';
+  if(c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found')return'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  if(c==='auth/email-already-in-use')return'อีเมลนี้ถูกสมัครใช้งานแล้ว กรุณากดปุ่มเข้าสู่ระบบ';
+  if(c==='auth/weak-password')return'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+  if(c==='auth/too-many-requests')return'ลองทำรายการบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่';
+  if(c==='auth/network-request-failed')return'เชื่อมต่อเครือข่ายไม่ได้ กรุณาลองใหม่อีกครั้ง';
+  return(e&&e.message)||'เข้าสู่ระบบไม่สำเร็จ';
+};
 const applyAcct=u=>{
   ACCT=u;NS=u?':'+u.id:'';myId=u?u.id:null;
   if(!u)profileReadyUid=null;
@@ -746,27 +768,56 @@ const applyAcct=u=>{
   try{Object.assign(rk,{rp:1000,w:0,l:0,def:null,att:null,roster:null,pd:null,pa:null},JSON.parse(localStorage.getItem('turnrank'+NS)||'{}'))}catch(e){}
   memS=null;if(typeof refreshSaves==='function')refreshSaves();
   A('acn').textContent=ACCT?'👤 '+nick:'👤 ผู้เล่นทั่วไป (ยังไม่ล็อกอิน)';
-  A('aco').textContent=ACCT?'ออกจากระบบ':'เข้าสู่ระบบด้วย Google';
+  A('aco').textContent=ACCT?'ออกจากระบบ':'เข้าสู่ระบบ';
   renderLB();
 };
 A('acn').textContent=ACCT?'👤 '+ACCT.name:'👤 ผู้เล่นทั่วไป (ยังไม่ล็อกอิน)';
-A('aco').textContent=ACCT?'ออกจากระบบ':'เข้าสู่ระบบด้วย Google';
-const openAu=()=>{A('ae').textContent='';A('au').classList.add('on')};
-A('al').onclick=async()=>{
-  const FB=window.__FB;A('ae').textContent='';A('al').disabled=true;
+A('aco').textContent=ACCT?'ออกจากระบบ':'เข้าสู่ระบบ';
+const openAu=()=>{A('ae').style.color='#ff8a80';A('ae').textContent='';A('au').classList.add('on')};
+A('al').onclick=()=>{
+  const FB=window.__FB;A('ae').style.color='#ff8a80';A('ae').textContent='';A('al').disabled=true;
+  const provider=new FB.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  const p=FB.auth?FB.signInWithPopup(FB.auth,provider):FB.ready.then(()=>FB.signInWithPopup(FB.auth,provider));
+  p.then(()=>{
+    try{localStorage.removeItem('turnguest')}catch(e){}
+    A('au').classList.remove('on');
+  }).catch(e=>{
+    A('ae').textContent=authErrMsg(e);
+  }).finally(()=>{A('al').disabled=false});
+};
+const emailGo=async mode=>{
+  const FB=window.__FB,em=A('ae_em').value.trim(),pw=A('ae_pw').value;
+  A('ae').style.color='#ff8a80';A('ae').textContent='';
+  if(!em||!pw){A('ae').textContent='กรุณากรอกอีเมลและรหัสผ่านก่อน';return}
+  if(mode==='reg'&&pw.length<6){A('ae').textContent='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';return}
+  A('ael').disabled=A('aer').disabled=true;
   try{
     await FB.ready;
-    const provider=new FB.GoogleAuthProvider();
-    provider.setCustomParameters({prompt:'select_account'});
-    const cred=await FB.signInWithPopup(FB.auth,provider);
-    const user=cred.user;
-    if(!user||!user.emailVerified){throw new Error('บัญชี Google นี้ยังไม่ได้ยืนยันอีเมล')}
+    if(mode==='reg')await FB.createUserWithEmailAndPassword(FB.auth,em,pw);
+    else await FB.signInWithEmailAndPassword(FB.auth,em,pw);
     try{localStorage.removeItem('turnguest')}catch(e){}
     A('au').classList.remove('on');
   }catch(e){
-    const msg=e&&e.code==='auth/popup-closed-by-user'?'ปิดหน้าต่างล็อกอินก่อนเสร็จสิ้น':(e&&e.message)||'เข้าสู่ระบบด้วย Google ไม่สำเร็จ';
-    A('ae').textContent=msg;
-  }finally{A('al').disabled=false}
+    A('ae').textContent=authErrMsg(e);
+  }finally{A('ael').disabled=A('aer').disabled=false}
+};
+A('ael').onclick=()=>emailGo('login');
+A('aer').onclick=()=>emailGo('reg');
+A('ae_pw').onkeydown=e=>{if(e.key==='Enter')emailGo('login')};
+A('aef').onclick=async()=>{
+  const FB=window.__FB,em=A('ae_em').value.trim();
+  A('ae').style.color='#ff8a80';A('ae').textContent='';
+  if(!em){A('ae').textContent='กรอกอีเมลด้านบนก่อนกดลืมรหัสผ่าน';return}
+  A('aef').disabled=true;
+  try{
+    await FB.ready;
+    await FB.sendPasswordResetEmail(FB.auth,em);
+    A('ae').style.color='#7bd88f';
+    A('ae').textContent='ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว';
+  }catch(e){
+    A('ae').textContent=authErrMsg(e);
+  }finally{A('aef').disabled=false}
 };
 A('ag').onclick=()=>{try{localStorage.setItem('turnguest','1')}catch(e){}A('au').classList.remove('on')};
 A('aco').onclick=async()=>{
@@ -798,7 +849,7 @@ if(!ACCT&&!g)openAu();
         const guestSaves=localStorage.getItem('turnsaves');
         const guestRank=localStorage.getItem('turnrank');
         const guestBest=localStorage.getItem('turnbest');
-        const uObj={id:user.uid,name:safeName(user.displayName||nick||'นักสู้')};
+        const uObj={id:user.uid,name:safeName(user.displayName||(user.email?user.email.split('@')[0]:'')||nick||'นักสู้')};
         try{
           if(guestSaves&&localStorage.getItem('turnsaves:'+user.uid)==null)localStorage.setItem('turnsaves:'+user.uid,guestSaves);
           if(guestRank&&localStorage.getItem('turnrank:'+user.uid)==null)localStorage.setItem('turnrank:'+user.uid,guestRank);
@@ -841,7 +892,7 @@ try{
 }catch(e){try{FB.handleFirestoreError(e,FB.OperationType.WRITE,path)}catch(x){}}}},400)}
 async function cloudLoad(){const FB=window.__FB;if(!fbReady||!FB||!myId||profileReadyUid!==myId)return;const uid=myId,path='users/'+uid+'/saves';
 try{
-  const qs=await FB.getDocs(FB.collection(FB.db,'users',uid,'saves'));
+  const qs=await FB.getDocs(FB.query(FB.collection(FB.db,'users',uid,'saves'),FB.where('ownerId','==',uid)));
   const l=readSaves();let ch=false;const cloudNames=new Set();
   qs.forEach(docSnap=>{
     cloudSaveMeta[docSnap.id]=true;
