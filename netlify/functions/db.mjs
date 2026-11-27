@@ -1,5 +1,71 @@
-// MOCKED — in-memory replacement for @netlify/blobs, data lost on container sleep
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { randomBytes, scrypt, createHash, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
+
+const DATA_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.data/db.json");
 const blobStores = new Map();
+
+function loadDisk() {
+  try {
+    if (!existsSync(DATA_FILE)) return;
+    const raw = JSON.parse(readFileSync(DATA_FILE, "utf8"));
+    if (!raw || typeof raw !== "object") return;
+    const now = Date.now();
+    for (const [storeName, entries] of Object.entries(raw)) {
+      if (!entries || typeof entries !== "object") continue;
+      const m = new Map();
+      for (const [k, v] of Object.entries(entries)) {
+        if (typeof v !== "string") continue;
+        if (storeName === "sessions") {
+          try {
+            const s = JSON.parse(v);
+            if (!s || s.exp <= now) continue;
+          } catch { continue; }
+        }
+        m.set(k, v);
+      }
+      blobStores.set(storeName, m);
+    }
+  } catch (err) {
+    console.error("Failed to load persisted store:", err);
+  }
+}
+
+function saveDisk() {
+  try {
+    mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    const now = Date.now();
+    const out = {};
+    for (const [storeName, m] of blobStores.entries()) {
+      const obj = {};
+      for (const [k, v] of m.entries()) {
+        if (storeName === "sessions") {
+          try {
+            const s = JSON.parse(v);
+            if (!s || s.exp <= now) { m.delete(k); continue; }
+          } catch { m.delete(k); continue; }
+        } else if (storeName === "limits") {
+          try {
+            const r = JSON.parse(v);
+            if (r && r.until && r.until <= now) { m.delete(k); continue; }
+          } catch { m.delete(k); continue; }
+        }
+        obj[k] = v;
+      }
+      out[storeName] = obj;
+    }
+    const tmp = DATA_FILE + ".tmp";
+    writeFileSync(tmp, JSON.stringify(out), "utf8");
+    renameSync(tmp, DATA_FILE);
+  } catch (err) {
+    console.error("Failed to persist store:", err);
+  }
+}
+
+loadDisk();
+
 function getStore({ name }) {
   if (!blobStores.has(name)) blobStores.set(name, new Map());
   const store = blobStores.get(name);
@@ -11,17 +77,16 @@ function getStore({ name }) {
     },
     async setJSON(key, value) {
       store.set(key, JSON.stringify(value));
+      saveDisk();
     },
     async delete(key) {
-      store.delete(key);
+      if (store.delete(key)) saveDisk();
     },
     async list() {
       return { blobs: Array.from(store.keys(), (key) => ({ key })) };
     },
   };
 }
-import { randomBytes, scrypt, createHash, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
 
 const scryptP = promisify(scrypt);
 const NAME = /^[\p{L}\p{M}\p{N}_]{3,14}$/u;
@@ -48,14 +113,34 @@ const json = (o, status = 200, headers = {}) =>
     status,
     headers: { "content-type": "application/json", "cache-control": "no-store", ...headers },
   });
-const isHttps = (req) => new URL(req.url).protocol === "https:";
-const cookie = (v, age, https = true) => `sid=${v}; Path=/; HttpOnly; ${https ? "Secure; SameSite=None" : "SameSite=Lax"}; Max-Age=${age}`;
+const isHttps = (req) =>
+  new URL(req.url).protocol === "https:" ||
+  (req.headers.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
+const cookie = (v, age, https = true) =>
+  `sid=${v}; Path=/; HttpOnly; ${https ? "Secure; SameSite=None; Partitioned" : "SameSite=Lax"}; Max-Age=${age}`;
 const isJson = (req) => (req.headers.get("content-type") || "").includes("application/json");
+const sameOrigin = (req) => {
+  if ((req.headers.get("x-requested-with") || "").toLowerCase() === "xmlhttprequest") return true;
+  const origin = req.headers.get("origin");
+  if (!origin) return false;
+  try {
+    const oHost = new URL(origin).host.toLowerCase();
+    const host = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "").split(",")[0].trim().toLowerCase();
+    return !!host && oHost === host;
+  } catch {
+    return false;
+  }
+};
 const int = (v, lo, hi) => {
   v = Math.floor(Number(v));
   return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo;
 };
-const sidOf = (req) => (/(?:^|;\s*)sid=([a-f0-9]{64})/.exec(req.headers.get("cookie") || "") || [])[1];
+const sidOf = (req) => {
+  const authH = req.headers.get("authorization") || "";
+  const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(authH.trim());
+  if (m) return m[1];
+  return (/(?:^|;\s*)sid=([a-f0-9]{64})/.exec(req.headers.get("cookie") || "") || [])[1];
+};
 const hashPw = async (pw, salt) => (await scryptP(pw.normalize("NFKC"), salt, 64)).toString("hex");
 
 async function getSession(req) {
@@ -82,6 +167,7 @@ async function auth(req, ctx) {
     return json({ user: s ? { id: s.uid, name: s.name } : null });
   }
   if (req.method !== "POST") return json({ error: "method" }, 405);
+  if (!sameOrigin(req)) return json({ error: "forbidden" }, 403);
   if (!isJson(req)) return json({ error: "bad request" }, 400);
   let b;
   try { b = await req.json(); } catch { return json({ error: "bad request" }, 400); }
@@ -108,7 +194,7 @@ async function auth(req, ctx) {
   const issue = async (rec) => {
     const token = randomBytes(32).toString("hex");
     await st("sessions").setJSON(sha(token), { uid: rec.id, name: rec.name, exp: Date.now() + SESSION_S * 1000 });
-    return json({ user: { id: rec.id, name: rec.name } }, 200, { "set-cookie": cookie(token, SESSION_S, isHttps(req)) });
+    return json({ user: { id: rec.id, name: rec.name }, token }, 200, { "set-cookie": cookie(token, SESSION_S, isHttps(req)) });
   };
 
   if (b.a === "register") {
@@ -154,6 +240,7 @@ function clean(col, d, name) {
 
 async function db(req) {
   if (req.method === "PUT") {
+    if (!sameOrigin(req)) return json({ error: "forbidden" }, 403);
     if (!isJson(req)) return json({ error: "bad request" }, 400);
     const s = await getSession(req);
     if (!s) return json({ error: "login" }, 401);
